@@ -70,17 +70,8 @@ function loadState() {
 
 // Helper: Initialize Default Vehicle if Storage is Empty
 function initializeDefaults() {
-  const defaultVehicle = {
-    id: 'veh-' + Date.now(),
-    name: 'My Scooter',
-    mileage: 45, // km/L
-    manualMileage: 45,
-    odometer: 1250, // Initial odometer
-    lastRefillOdo: 1250,
-    lastRefillRange: 0
-  };
-  state.vehicles = [defaultVehicle];
-  state.activeVehicleId = defaultVehicle.id;
+  state.vehicles = [];
+  state.activeVehicleId = '';
   state.refills = [];
   state.theme = 'dark';
   state.petrolRate = 104.21;
@@ -89,6 +80,7 @@ function initializeDefaults() {
   state.achievements = [];
   saveState();
 }
+
 
 // Dynamic Petrol Rate Fetcher via Location API
 async function fetchLocalPetrolRate() {
@@ -175,7 +167,15 @@ function getActiveVehicle() {
 // UI Rendering Engine: Dashboard
 function renderDashboard() {
   const vehicle = getActiveVehicle();
-  if (!vehicle) return;
+  if (!vehicle) {
+    document.getElementById('active-vehicle-name-header').innerText = 'No Vehicle';
+    document.getElementById('dash-range-left').innerText = `0 km`;
+    document.getElementById('dash-range-percent').innerText = 'Please add a vehicle';
+    document.getElementById('dash-current-odo').innerText = `0 km`;
+    document.getElementById('dash-mileage').innerText = `0 km/L`;
+    document.getElementById('dash-last-refill-odo').innerText = 'None';
+    return;
+  }
   
   // Update header text
   document.getElementById('active-vehicle-name-header').innerText = vehicle.name;
@@ -907,6 +907,10 @@ function renderProfile() {
     document.getElementById('profile-active-name').innerText = activeVehicle.name;
     const hasAdjusted = activeVehicle.manualMileage !== undefined && activeVehicle.mileage !== activeVehicle.manualMileage;
     document.getElementById('profile-active-details').innerHTML = `Mileage: <strong>${activeVehicle.mileage.toFixed(1)} km/L</strong>${hasAdjusted ? ` <span style="font-size:0.75rem; opacity:0.8;">(Auto-adjusted from ${activeVehicle.manualMileage.toFixed(1)})</span>` : ''} | Odo: <strong>${activeVehicle.odometer} km</strong>`;
+  } else {
+    document.getElementById('profile-avatar-initials').innerText = '?';
+    document.getElementById('profile-active-name').innerText = 'No Vehicle';
+    document.getElementById('profile-active-details').innerHTML = `Please add a vehicle to track stats.`;
   }
   
   // Render Achievements
@@ -1311,6 +1315,10 @@ function openModal(modalId) {
 }
 
 function closeModal(modalId) {
+  if (modalId === 'vehicle-modal' && state.vehicles.length === 0) {
+    alert("You must add at least one vehicle to use the app.");
+    return;
+  }
   const modal = document.getElementById(modalId);
   if (!modal) return;
   modal.style.display = 'none';
@@ -1415,6 +1423,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Setup initial active screens
   switchTab('dashboard');
+  
+  // Enforce onboarding if no vehicles
+  if (state.vehicles.length === 0) {
+    openModal('vehicle-modal');
+  }
   
   // Register Service Worker for PWA compliance
   registerServiceWorker();
