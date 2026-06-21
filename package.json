@@ -1,0 +1,12 @@
+{
+  "name": "petrol-checker-pwa",
+  "version": "1.0.0",
+  "description": "Progressive Web App to track petrol fills and estimate range.",
+  "main": "app.js",
+  "scripts": {
+    "dev": "http-server -p 8085 -c-1"
+  },
+  "dependencies": {
+    "http-server": "^14.1.1"
+  }
+}

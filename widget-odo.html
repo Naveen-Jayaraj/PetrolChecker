@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update Odo Widget</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background-color: transparent; }
+    .widget-container { padding: 16px; border-radius: 20px; background-color: var(--surface-color); border: 1px solid var(--border-color); text-align: center; }
+    h3 { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 8px; }
+    .val { font-size: 1.5rem; font-weight: bold; margin-bottom: 12px; }
+    a { display: inline-block; padding: 8px 16px; background-color: var(--accent-color); color: #000; text-decoration: none; border-radius: 12px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="widget-container">
+    <h3>Current Odometer</h3>
+    <div class="val" id="val">Loading...</div>
+    <a href="/?action=update-odo" target="_blank">Update</a>
+  </div>
+  <script>
+    try {
+      const state = JSON.parse(localStorage.getItem('petrol_tracker_state'));
+      if (state && state.vehicles && state.vehicles.length > 0) {
+        const v = state.vehicles.find(v => v.id === state.activeVehicleId) || state.vehicles[0];
+        document.getElementById('val').innerText = v.odometer + ' km';
+      }
+    } catch(e) {}
+  </script>
+</body>
+</html>

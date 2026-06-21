@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Widget</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background-color: transparent; }
+    .widget-container { padding: 16px; border-radius: 24px; background-color: var(--surface-color); border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; height: 100%; box-sizing: border-box; }
+    .row { display: flex; justify-content: space-between; align-items: center; }
+    .col { display: flex; flex-direction: column; }
+    h3 { color: var(--text-secondary); font-size: 0.8rem; margin: 0; text-transform: uppercase; }
+    .val { font-size: 1.4rem; font-weight: bold; color: var(--accent-color); }
+    .val-sm { font-size: 1.1rem; font-weight: bold; }
+    .actions { display: flex; gap: 8px; margin-top: auto; }
+    a { flex: 1; padding: 10px; text-align: center; background-color: var(--surface-accent); border: 1px solid var(--border-color); color: var(--text-primary); text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 0.9rem; }
+    a.primary { background: linear-gradient(135deg, var(--accent-color), var(--accent-dark)); color: #000; border: none; }
+  </style>
+</head>
+<body>
+  <div class="widget-container">
+    <div class="row">
+      <div class="col">
+        <h3>Range Left</h3>
+        <div class="val" id="val-range">-- km</div>
+      </div>
+      <div class="col" style="text-align: right;">
+        <h3>Odometer</h3>
+        <div class="val-sm" id="val-odo">-- km</div>
+      </div>
+    </div>
+    <div class="actions">
+      <a href="/?action=update-odo" target="_blank">Update Odo</a>
+      <a href="/?action=quick-add" target="_blank" class="primary">+ Refill</a>
+    </div>
+  </div>
+  <script>
+    try {
+      const state = JSON.parse(localStorage.getItem('petrol_tracker_state'));
+      if (state && state.vehicles && state.vehicles.length > 0) {
+        const v = state.vehicles.find(v => v.id === state.activeVehicleId) || state.vehicles[0];
+        const range = v.lastRefillRange || 0;
+        const currentOdo = v.odometer || 0;
+        const lastOdo = v.lastRefillOdo || 0;
+        let left = Math.max(0, (lastOdo + range) - currentOdo);
+        
+        document.getElementById('val-range').innerText = left.toFixed(1) + ' km';
+        document.getElementById('val-odo').innerText = currentOdo + ' km';
+      }
+    } catch(e) {}
+  </script>
+</body>
+</html>
