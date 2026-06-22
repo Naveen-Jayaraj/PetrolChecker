@@ -1206,7 +1206,7 @@ nav {
 }
 
 /* Ensure contents sit in front of background decorations */
-header, main, nav, .modal-overlay, .alert-dialog {
+header, main {
   position: relative;
   z-index: 2;
 }
