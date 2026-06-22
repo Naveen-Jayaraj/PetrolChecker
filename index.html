@@ -21,6 +21,22 @@
 
   <!-- App Wrapper (Mobile Viewport) -->
   <div id="app-container">
+
+    <!-- Calm Minimalist Background Artwork -->
+    <div class="bg-artwork" aria-hidden="true">
+      <svg class="decor-leaf-top" viewBox="0 0 100 100">
+        <!-- Botanical leaf line art -->
+        <path d="M10,-10 C30,10 50,5 60,30 C70,55 55,80 80,100" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M38,9 C25,12 18,25 22,35 C25,40 35,38 38,9 Z" fill="none" stroke="currentColor" stroke-width="0.8" />
+        <path d="M50,18 C40,25 38,40 45,48 C50,53 58,45 50,18 Z" fill="none" stroke="currentColor" stroke-width="0.8" />
+        <path d="M57,38 C50,48 55,60 65,65 C72,68 73,58 57,38 Z" fill="none" stroke="currentColor" stroke-width="0.8" />
+      </svg>
+      <svg class="decor-waves-bottom" viewBox="0 0 100 100">
+        <!-- Soft abstract landscape curves -->
+        <path d="M-20,100 Q15,75 50,85 T120,70" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.6" />
+        <path d="M-20,110 Q25,90 60,95 T120,85" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.4" />
+      </svg>
+    </div>
     
     <!-- Top Header -->
     <header>
@@ -194,6 +210,32 @@
           <!-- Dynamically populated -->
         </div>
         
+        <!-- Mileage Learning Card (Health Meter) -->
+        <div class="odo-control-card" id="mileage-learning-card" style="margin-bottom: 20px;">
+          <div class="section-title" style="margin-bottom: 8px;">Mileage Learning</div>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+            Tracking model confidence and adjustments based on historical trip error rates.
+          </p>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; text-align: center;">
+            <div style="background-color: var(--surface-accent); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 6px;">
+              <span style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">Initial</span>
+              <div id="learning-initial" style="font-size: 1rem; font-weight: 700; margin-top: 4px;">--</div>
+            </div>
+            <div style="background-color: var(--surface-accent); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 6px;">
+              <span style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">Current</span>
+              <div id="learning-current" style="font-size: 1rem; font-weight: 700; color: var(--accent-color); margin-top: 4px;">--</div>
+            </div>
+            <div style="background-color: var(--surface-accent); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 6px;">
+              <span style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">Confidence</span>
+              <div id="learning-confidence" style="font-size: 1rem; font-weight: 700; color: var(--success-color); margin-top: 4px;">--</div>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px dashed var(--border-color); font-size: 0.85rem;">
+            <span style="color: var(--text-secondary);">Trend Indicator</span>
+            <strong id="learning-trend" style="display: flex; align-items: center; gap: 4px;">➔ Stable</strong>
+          </div>
+        </div>
+
         <!-- Vehicle List Management -->
         <div class="section-title">
           <span>Manage Vehicles</span>
@@ -365,6 +407,46 @@
           
           <button type="submit" class="btn-primary" style="margin-top: 20px;">Save Changes</button>
         </form>
+      </div>
+    </div>
+
+    <!-- MODAL 4: MILEAGE INSIGHT SHEET -->
+    <div id="insight-modal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">⚡ Mileage Insight</h2>
+          <button class="btn-close" onclick="closeModal('insight-modal')">&times;</button>
+        </div>
+        <div style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary); margin-bottom: 20px;">
+          <p style="margin-bottom: 12px;">
+            Your vehicle <strong id="insight-vehicle-name" style="color:var(--accent-color);">Activa</strong> has exceeded its predicted range for <strong id="insight-refill-count">3</strong> consecutive refills!
+          </p>
+          <div style="background-color: var(--surface-accent); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Expected Mileage</span>
+              <div id="insight-expected-mileage" style="font-size: 1.25rem; font-weight: 700; color: var(--text-secondary);">35 km/L</div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Observed Mileage</span>
+              <div id="insight-observed-mileage" style="font-size: 1.25rem; font-weight: 700; color: var(--success-color);">~41 km/L</div>
+            </div>
+          </div>
+          <p style="margin-bottom: 16px; color: var(--text-secondary); font-size: 0.85rem;">
+            What do you think is causing this improvement?
+          </p>
+          
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button type="button" class="btn-primary" onclick="handleInsightChoice('better')" style="justify-content: flex-start; padding: 12px 16px; font-size: 0.95rem; box-shadow: none;">
+              <span>🟢</span> Mileage is actually better
+            </button>
+            <button type="button" class="btn-secondary" onclick="handleInsightChoice('leftover')" style="justify-content: flex-start; padding: 12px 16px; font-size: 0.95rem; border: 1px solid var(--border-color); color: var(--text-primary); background-color: var(--surface-accent); cursor: pointer; border-radius: 12px; font-weight: 600;">
+              <span>🟡</span> There was fuel already in tank
+            </button>
+            <button type="button" class="btn-secondary" onclick="handleInsightChoice('unsure')" style="justify-content: flex-start; padding: 12px 16px; font-size: 0.95rem; border: 1px solid var(--border-color); color: var(--text-primary); background-color: var(--surface-accent); cursor: pointer; border-radius: 12px; font-weight: 600;">
+              <span>⚪</span> Not sure (Keep tracking)
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 

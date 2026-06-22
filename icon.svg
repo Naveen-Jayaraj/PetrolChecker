@@ -1,42 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <!-- Background Gradient -->
-    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#141414" />
-      <stop offset="100%" stop-color="#000000" />
+    <!-- Sage gradients matching the theme -->
+    <linearGradient id="leaf-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8eb695" />
+      <stop offset="100%" stop-color="#44634d" />
     </linearGradient>
-    <!-- Gold Gradient -->
-    <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFE082" />
-      <stop offset="50%" stop-color="#FFB300" />
-      <stop offset="100%" stop-color="#FF8F00" />
-    </linearGradient>
-    <!-- Glow Filter -->
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="8" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
   </defs>
   <!-- Background -->
-  <rect width="512" height="512" rx="128" fill="url(#bg-grad)" />
-  <!-- Border -->
-  <rect x="16" y="16" width="480" height="480" rx="112" fill="none" stroke="url(#gold-grad)" stroke-width="8" opacity="0.3" />
-  <!-- Petrol Pump Icon Group -->
-  <g transform="translate(112, 100)" filter="url(#glow)">
-    <!-- Main Pump Body -->
-    <rect x="50" y="80" width="130" height="220" rx="16" fill="none" stroke="url(#gold-grad)" stroke-width="20" stroke-linejoin="round" />
-    <!-- Screen -->
-    <rect x="75" y="110" width="80" height="50" rx="8" fill="none" stroke="url(#gold-grad)" stroke-width="12" />
-    <line x1="90" y1="135" x2="140" y2="135" stroke="url(#gold-grad)" stroke-width="6" stroke-linecap="round" />
-    <!-- Hose & Nozzle -->
-    <!-- Base connection -->
-    <circle cx="180" cy="270" r="10" fill="url(#gold-grad)" />
-    <!-- Hose curve -->
-    <path d="M 180 270 C 230 270, 250 200, 220 120" fill="none" stroke="url(#gold-grad)" stroke-width="16" stroke-linecap="round" />
-    <!-- Nozzle hanging -->
-    <path d="M 220 120 L 220 100 L 205 90 L 195 105" fill="none" stroke="url(#gold-grad)" stroke-width="12" stroke-linejoin="round" stroke-linecap="round" />
-    <path d="M 220 110 L 235 110" stroke="url(#gold-grad)" stroke-width="8" stroke-linecap="round" />
-    <!-- Fuel Drop -->
-    <path d="M 115 220 C 115 235, 135 235, 135 220 C 135 210, 115 190, 115 190 C 115 190, 95 210, 95 220 C 95 235, 115 235, 115 220 Z" fill="url(#gold-grad)" />
+  <rect width="512" height="512" rx="128" fill="#0e1410" />
+  
+  <!-- Outer organic ring -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="none" stroke="#8eb695" stroke-width="4" opacity="0.15" />
+  
+  <!-- Stylized leaf + fuel drop icon in the center -->
+  <g transform="translate(128, 112)">
+    <!-- Droplet / leaf contour -->
+    <!-- Left side of the drop/leaf -->
+    <path d="M 128 32 C 128 32, 28 132, 28 200 C 28 256, 73 288, 128 288 C 183 288, 228 256, 228 200 C 228 132, 128 32, 128 32 Z" 
+          fill="url(#leaf-grad)" />
+          
+    <!-- Leaf veins inside the droplet (white outline for premium organic design contrast) -->
+    <!-- Center stem -->
+    <path d="M 128 64 L 128 260" stroke="#f2f6f3" stroke-width="6" stroke-linecap="round" opacity="0.7" />
+    
+    <!-- Left diagonal veins -->
+    <path d="M 128 130 C 100 140, 70 160, 60 190" fill="none" stroke="#f2f6f3" stroke-width="5" stroke-linecap="round" opacity="0.6" />
+    <path d="M 128 180 C 100 190, 80 210, 75 235" fill="none" stroke="#f2f6f3" stroke-width="5" stroke-linecap="round" opacity="0.6" />
+    
+    <!-- Right diagonal veins -->
+    <path d="M 128 130 C 156 140, 186 160, 196 190" fill="none" stroke="#f2f6f3" stroke-width="5" stroke-linecap="round" opacity="0.6" />
+    <path d="M 128 180 C 156 190, 176 210, 181 235" fill="none" stroke="#f2f6f3" stroke-width="5" stroke-linecap="round" opacity="0.6" />
+    
+    <!-- A small fuel drop detail at the top tip -->
+    <circle cx="128" cy="20" r="8" fill="#8eb695" />
   </g>
 </svg>

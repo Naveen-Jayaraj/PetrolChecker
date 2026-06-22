@@ -1,42 +1,43 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Default to Dark AMOLED Theme */
-  --bg-color: #000000;
-  --surface-color: #121212;
-  --surface-accent: #1e1e1e;
-  --border-color: #262626;
-  --text-primary: #ffffff;
-  --text-secondary: #8a8a8a;
-  --accent-color: #f9c123; /* Rapido Yellow */
-  --accent-glow: rgba(249, 193, 35, 0.35);
-  --accent-light: #fff3c4;
-  --accent-dark: #e0a800;
-  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  --glass-bg: rgba(18, 18, 18, 0.8);
-  --glass-border: rgba(249, 193, 35, 0.15);
-  --success-color: #4caf50;
-  --danger-color: #f44336;
+  /* Dark Mode: Calm Slate Forest Green */
+  --bg-color: #0e1410;
+  --surface-color: #17201a;
+  --surface-accent: #1f2b23;
+  --border-color: #2d3d32;
+  --text-primary: #f2f6f3;
+  --text-secondary: #94a99b;
+  --accent-color: #8eb695; /* Calming sage green */
+  --accent-glow: rgba(142, 182, 149, 0.1);
+  --accent-light: #eef5f0;
+  --accent-dark: #44634d;
+  --card-shadow: 0 8px 32px rgba(14, 20, 16, 0.08);
+  --glass-bg: rgba(23, 32, 26, 0.75);
+  --glass-border: rgba(142, 182, 149, 0.08);
+  --success-color: #73a976;
+  --danger-color: #c97c72;
   --font-family: 'Outfit', sans-serif;
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 [data-theme="light"] {
-  --bg-color: #FAF8ED; /* Soft warm yellowish cream */
+  /* Light Mode: Warm Cream Sage */
+  --bg-color: #f3f7f4;
   --surface-color: #ffffff;
-  --surface-accent: #fefdf9;
-  --border-color: #ebdcb9; /* Warm golden-cream border */
-  --text-primary: #38321a; /* Warm charcoal brown */
-  --text-secondary: #7c7356;
-  --accent-color: #f9c123; /* Rapido Yellow */
-  --accent-glow: rgba(249, 193, 35, 0.25);
-  --accent-light: #fffdf5;
-  --accent-dark: #e0a800;
-  --card-shadow: 0 8px 24px rgba(249, 193, 35, 0.1);
-  --glass-bg: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(249, 193, 35, 0.2);
-  --success-color: #2e7d32;
-  --danger-color: #d32f2f;
+  --surface-accent: #eaf1ed;
+  --border-color: #d1dfd6;
+  --text-primary: #24352a;
+  --text-secondary: #5b6f63;
+  --accent-color: #6e9075; /* Eucalyptus green */
+  --accent-glow: rgba(110, 144, 117, 0.05);
+  --accent-light: #f1f6f3;
+  --accent-dark: #4a6851;
+  --card-shadow: 0 8px 24px rgba(110, 144, 117, 0.04);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(110, 144, 117, 0.06);
+  --success-color: #56875b;
+  --danger-color: #b55b50;
 }
 
 * {
@@ -95,11 +96,9 @@ header {
 
 .header-title-section h1 {
   font-size: 1.4rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, var(--text-primary) 30%, var(--accent-color) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
 }
 
 .header-actions {
@@ -125,8 +124,7 @@ header {
 
 .btn-icon:hover {
   border-color: var(--accent-color);
-  box-shadow: 0 0 8px var(--accent-glow);
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
 
 .btn-icon svg {
@@ -168,7 +166,7 @@ main::-webkit-scrollbar {
 .dashboard-card {
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
-  border-radius: 24px;
+  border-radius: 20px;
   padding: 24px;
   margin-bottom: 20px;
   text-align: center;
@@ -176,16 +174,6 @@ main::-webkit-scrollbar {
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
-}
-
-.dashboard-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--accent-color), var(--accent-dark));
 }
 
 /* Circular Gauge */
@@ -208,16 +196,15 @@ main::-webkit-scrollbar {
 .gauge-bg {
   fill: none;
   stroke: var(--border-color);
-  stroke-width: 14;
+  stroke-width: 10;
 }
 
 .gauge-fill {
   fill: none;
   stroke: var(--accent-color);
-  stroke-width: 14;
+  stroke-width: 10;
   stroke-linecap: round;
   transition: stroke-dashoffset 0.6s cubic-bezier(0.1, 0.8, 0.3, 1);
-  filter: drop-shadow(0 0 6px var(--accent-color));
 }
 
 .gauge-info {
@@ -359,26 +346,25 @@ main::-webkit-scrollbar {
 
 .btn-adjust:hover {
   border-color: var(--accent-color);
-  background-color: rgba(249, 193, 35, 0.05);
+  background-color: var(--surface-accent);
 }
 
 /* Core Buttons */
 .btn-primary {
   width: 100%;
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-dark) 100%);
-  color: #000000;
+  background-color: var(--accent-color);
+  color: var(--surface-color);
   border: none;
-  padding: 16px;
-  border-radius: 16px;
-  font-size: 1.05rem;
-  font-weight: 700;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 6px 20px var(--accent-glow);
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .btn-primary:active {
@@ -832,7 +818,6 @@ main::-webkit-scrollbar {
 
 .form-input:focus {
   border-color: var(--accent-color);
-  box-shadow: 0 0 8px var(--accent-glow);
 }
 
 .input-suffix {
@@ -969,7 +954,6 @@ nav {
 
 .nav-item.active svg {
   transform: translateY(-2px);
-  filter: drop-shadow(0 0 4px var(--accent-glow));
 }
 
 .nav-item::after {
@@ -992,26 +976,24 @@ nav {
 /* Chart SVG Elements styling */
 .chart-bar {
   fill: var(--accent-color);
-  rx: 4;
+  rx: 2;
   transition: height 0.5s ease, y 0.5s ease;
 }
 
 .chart-bar:hover {
   fill: var(--accent-dark);
-  filter: drop-shadow(0 0 4px var(--accent-glow));
 }
 
 .chart-line {
   fill: none;
   stroke: var(--accent-color);
-  stroke-width: 3;
+  stroke-width: 2.5;
   stroke-linecap: round;
-  filter: drop-shadow(0 4px 8px var(--accent-glow));
 }
 
 .chart-area {
   fill: url(#area-grad);
-  opacity: 0.15;
+  opacity: 0.08;
 }
 
 .chart-grid-line {
@@ -1033,8 +1015,7 @@ nav {
 }
 
 .chart-pie-slice:hover {
-  transform: scale(1.03);
-  filter: drop-shadow(0 0 6px var(--accent-glow));
+  transform: scale(1.02);
 }
 
 /* SVG Chart Legends */
@@ -1186,4 +1167,46 @@ nav {
 .alert-btn-confirm {
   background-color: var(--danger-color);
   color: #ffffff;
+}
+
+/* Minimalist Background Line Art Decoration */
+.bg-artwork {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0; /* behind everything */
+  color: var(--accent-color);
+  opacity: 0.08; /* Eucalyptus accent tint */
+  transition: opacity 0.4s ease, color 0.4s ease;
+}
+
+[data-theme="light"] .bg-artwork {
+  opacity: 0.05; /* slightly softer in light mode to preserve text contrast */
+}
+
+.decor-leaf-top {
+  position: absolute;
+  top: 0;
+  right: -30px;
+  width: 170px;
+  height: 170px;
+  transform: rotate(-10deg);
+}
+
+.decor-waves-bottom {
+  position: absolute;
+  bottom: 72px; /* stay above navigation bar */
+  left: -20px;
+  width: 220px;
+  height: 130px;
+}
+
+/* Ensure contents sit in front of background decorations */
+header, main, nav, .modal-overlay, .alert-dialog {
+  position: relative;
+  z-index: 2;
 }

@@ -48,7 +48,22 @@ function loadState() {
       // Recalculate mileage for all vehicles
       state.vehicles.forEach(v => {
         if (v.manualMileage === undefined) {
-          v.manualMileage = v.mileage;
+          v.manualMileage = v.mileage || 45;
+        }
+        if (v.userMileage === undefined) {
+          v.userMileage = v.manualMileage;
+        }
+        if (v.learnedMileage === undefined) {
+          v.learnedMileage = v.mileage || v.userMileage || 45;
+        }
+        if (v.confidence === undefined) {
+          v.confidence = 0;
+        }
+        if (v.consecutiveSurplusCount === undefined) {
+          v.consecutiveSurplusCount = 0;
+        }
+        if (v.refillErrors === undefined) {
+          v.refillErrors = [];
         }
         recalculateVehicleMileage(v);
       });
@@ -186,22 +201,30 @@ function renderDashboard() {
   const currentOdo = vehicle.odometer || 0;
   const lastRefillOdo = vehicle.lastRefillOdo || 0;
   
-  let rangeLeft = 0;
-  let percentLeft = 0;
+  let rangeLeftText = "0 km";
+  let percentLeftText = "Refill needed";
+  let percentLeftVal = 0;
+  let isSurplus = false;
   
   if (totalRange > 0) {
     const endOdo = lastRefillOdo + totalRange;
-    rangeLeft = Math.max(0, parseFloat((endOdo - currentOdo).toFixed(1)));
-    percentLeft = Math.min(100, Math.max(0, Math.round((rangeLeft / totalRange) * 100)));
-  } else {
-    // If no refill recorded yet
-    rangeLeft = 0;
-    percentLeft = 0;
+    if (currentOdo > endOdo) {
+      const surplus = parseFloat((currentOdo - endOdo).toFixed(1));
+      rangeLeftText = `+${surplus} km`;
+      percentLeftText = `Surplus Range`;
+      percentLeftVal = 100;
+      isSurplus = true;
+    } else {
+      const remaining = parseFloat((endOdo - currentOdo).toFixed(1));
+      percentLeftVal = Math.min(100, Math.max(0, Math.round((remaining / totalRange) * 100)));
+      rangeLeftText = `${remaining} km`;
+      percentLeftText = `${percentLeftVal}% Range Left`;
+    }
   }
   
   // Update UI texts
-  document.getElementById('dash-range-left').innerText = `${rangeLeft} km`;
-  document.getElementById('dash-range-percent').innerText = totalRange > 0 ? `${percentLeft}% Range Left` : 'Refill needed';
+  document.getElementById('dash-range-left').innerText = rangeLeftText;
+  document.getElementById('dash-range-percent').innerText = totalRange > 0 ? percentLeftText : 'Refill needed';
   document.getElementById('dash-current-odo').innerText = `${currentOdo.toLocaleString()} km`;
   document.getElementById('dash-mileage').innerText = `${vehicle.mileage.toFixed(1)} km/L`;
   document.getElementById('dash-last-refill-odo').innerText = lastRefillOdo > 0 ? `${lastRefillOdo.toLocaleString()} km` : 'None';
@@ -214,16 +237,22 @@ function renderDashboard() {
     circle.setAttribute('stroke-dasharray', circumference);
     
     // Dash offset: if 100% left, offset is 0. If 0% left, offset is circumference.
-    const offset = circumference - (percentLeft / 100) * circumference;
+    const offset = circumference - (percentLeftVal / 100) * circumference;
     circle.setAttribute('stroke-dashoffset', offset);
     
     // Dynamic color shifting for visual cue
-    if (percentLeft > 50) {
-      circle.style.stroke = 'var(--accent-color)';
-    } else if (percentLeft > 20) {
-      circle.style.stroke = '#ffa726'; // amber warning
+    if (isSurplus) {
+      circle.style.stroke = 'var(--success-color)';
+      circle.style.filter = 'none';
+    } else if (percentLeftVal > 50) {
+      circle.style.stroke = 'var(--success-color)';
+      circle.style.filter = 'none';
+    } else if (percentLeftVal > 20) {
+      circle.style.stroke = '#e9c46a'; // soft sand gold
+      circle.style.filter = 'none';
     } else {
-      circle.style.stroke = 'var(--danger-color)'; // red danger
+      circle.style.stroke = 'var(--danger-color)';
+      circle.style.filter = 'none';
     }
   }
   
@@ -282,17 +311,29 @@ function softUpdateOdometer(newValue) {
   const totalRange = vehicle.lastRefillRange || 0;
   const lastRefillOdo = vehicle.lastRefillOdo || 0;
   
-  let rangeLeft = 0;
-  let percentLeft = 0;
+  let rangeLeftText = "0 km";
+  let percentLeftText = "Refill needed";
+  let percentLeftVal = 0;
+  let isSurplus = false;
   
   if (totalRange > 0) {
     const endOdo = lastRefillOdo + totalRange;
-    rangeLeft = Math.max(0, parseFloat((endOdo - newValue).toFixed(1)));
-    percentLeft = Math.min(100, Math.max(0, Math.round((rangeLeft / totalRange) * 100)));
+    if (newValue > endOdo) {
+      const surplus = parseFloat((newValue - endOdo).toFixed(1));
+      rangeLeftText = `+${surplus} km`;
+      percentLeftText = `Surplus Range`;
+      percentLeftVal = 100;
+      isSurplus = true;
+    } else {
+      const remaining = parseFloat((endOdo - newValue).toFixed(1));
+      percentLeftVal = Math.min(100, Math.max(0, Math.round((remaining / totalRange) * 100)));
+      rangeLeftText = `${remaining} km`;
+      percentLeftText = `${percentLeftVal}% Range Left`;
+    }
   }
   
-  document.getElementById('dash-range-left').innerText = `${rangeLeft} km`;
-  document.getElementById('dash-range-percent').innerText = totalRange > 0 ? `${percentLeft}% Range Left` : 'Refill needed';
+  document.getElementById('dash-range-left').innerText = rangeLeftText;
+  document.getElementById('dash-range-percent').innerText = totalRange > 0 ? percentLeftText : 'Refill needed';
   
   // Update travelled diff text
   const diff = Math.max(0, newValue - lastRefillOdo);
@@ -307,14 +348,20 @@ function softUpdateOdometer(newValue) {
     const radius = 80;
     const circumference = 2 * Math.PI * radius;
     circle.setAttribute('stroke-dasharray', circumference);
-    const offset = circumference - (percentLeft / 100) * circumference;
+    const offset = circumference - (percentLeftVal / 100) * circumference;
     circle.setAttribute('stroke-dashoffset', offset);
-    if (percentLeft > 50) {
-      circle.style.stroke = 'var(--accent-color)';
-    } else if (percentLeft > 20) {
-      circle.style.stroke = '#ffa726';
+    if (isSurplus) {
+      circle.style.stroke = 'var(--success-color)';
+      circle.style.filter = 'none';
+    } else if (percentLeftVal > 50) {
+      circle.style.stroke = 'var(--success-color)';
+      circle.style.filter = 'none';
+    } else if (percentLeftVal > 20) {
+      circle.style.stroke = '#e9c46a'; // soft sand gold
+      circle.style.filter = 'none';
     } else {
       circle.style.stroke = 'var(--danger-color)';
+      circle.style.filter = 'none';
     }
   }
 }
@@ -325,41 +372,23 @@ function recalculateVehicleMileage(vehicle) {
   if (vehicle.manualMileage === undefined) {
     vehicle.manualMileage = vehicle.mileage || 45;
   }
-  
-  // Find all refills for this vehicle
-  const vRefills = state.refills
-    .filter(r => r.vehicleId === vehicle.id)
-    .sort((a, b) => new Date(a.date) - new Date(b.date) || a.odometer - b.odometer);
-    
-  const N = vRefills.length - 1; // Number of trips
-  
-  if (N <= 0) {
-    vehicle.mileage = vehicle.manualMileage;
-    return;
+  if (vehicle.userMileage === undefined) {
+    vehicle.userMileage = vehicle.manualMileage;
+  }
+  if (vehicle.learnedMileage === undefined) {
+    vehicle.learnedMileage = vehicle.mileage || vehicle.userMileage || 45;
+  }
+  if (vehicle.confidence === undefined) {
+    vehicle.confidence = 0;
+  }
+  if (vehicle.consecutiveSurplusCount === undefined) {
+    vehicle.consecutiveSurplusCount = 0;
+  }
+  if (vehicle.refillErrors === undefined) {
+    vehicle.refillErrors = [];
   }
   
-  // Calculate learned mileage
-  const firstRefill = vRefills[0];
-  const lastRefill = vRefills[vRefills.length - 1];
-  const totalDistance = lastRefill.odometer - firstRefill.odometer;
-  
-  // Sum liters for all refills except the last one
-  let totalLiters = 0;
-  for (let i = 0; i < vRefills.length - 1; i++) {
-    totalLiters += vRefills[i].liters;
-  }
-  
-  if (totalDistance > 0 && totalLiters > 0) {
-    const learnedMileage = totalDistance / totalLiters;
-    
-    // Blending formula
-    const weightManual = Math.max(0, 3 - N);
-    const blendedMileage = (vehicle.manualMileage * weightManual + learnedMileage * N) / (weightManual + N);
-    
-    vehicle.mileage = parseFloat(blendedMileage.toFixed(2));
-  } else {
-    vehicle.mileage = vehicle.manualMileage;
-  }
+  vehicle.mileage = vehicle.learnedMileage;
 }
 
 
@@ -886,8 +915,8 @@ function renderProfile() {
     card.className = `vehicle-card ${isActive ? 'active' : ''}`;
     card.onclick = () => selectVehicle(vehicle.id);
     
-    const hasAdjusted = vehicle.manualMileage !== undefined && vehicle.mileage !== vehicle.manualMileage;
-    const mileageDisplay = `${vehicle.mileage.toFixed(1)} km/L${hasAdjusted ? ` <span style="font-size:0.75rem; font-weight:normal; opacity:0.8;">(Auto-adjusted from ${vehicle.manualMileage.toFixed(1)})</span>` : ''}`;
+    const hasAdjusted = vehicle.userMileage !== undefined && vehicle.learnedMileage !== vehicle.userMileage;
+    const mileageDisplay = `${vehicle.learnedMileage.toFixed(1)} km/L${hasAdjusted ? ` <span style="font-size:0.75rem; font-weight:normal; opacity:0.8;">(Auto-adjusted from ${vehicle.userMileage.toFixed(1)})</span>` : ''}`;
     
     card.innerHTML = `
       <div class="vehicle-details">
@@ -905,12 +934,47 @@ function renderProfile() {
     const initials = activeVehicle.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
     document.getElementById('profile-avatar-initials').innerText = initials;
     document.getElementById('profile-active-name').innerText = activeVehicle.name;
-    const hasAdjusted = activeVehicle.manualMileage !== undefined && activeVehicle.mileage !== activeVehicle.manualMileage;
-    document.getElementById('profile-active-details').innerHTML = `Mileage: <strong>${activeVehicle.mileage.toFixed(1)} km/L</strong>${hasAdjusted ? ` <span style="font-size:0.75rem; opacity:0.8;">(Auto-adjusted from ${activeVehicle.manualMileage.toFixed(1)})</span>` : ''} | Odo: <strong>${activeVehicle.odometer} km</strong>`;
+    const hasAdjusted = activeVehicle.userMileage !== undefined && activeVehicle.learnedMileage !== activeVehicle.userMileage;
+    document.getElementById('profile-active-details').innerHTML = `Mileage: <strong>${activeVehicle.learnedMileage.toFixed(1)} km/L</strong>${hasAdjusted ? ` <span style="font-size:0.75rem; opacity:0.8;">(Auto-adjusted from ${activeVehicle.userMileage.toFixed(1)})</span>` : ''} | Odo: <strong>${activeVehicle.odometer} km</strong>`;
+    
+    // Update Mileage Health Meter
+    const learningInitial = document.getElementById('learning-initial');
+    const learningCurrent = document.getElementById('learning-current');
+    const learningConfidence = document.getElementById('learning-confidence');
+    const learningTrend = document.getElementById('learning-trend');
+    
+    if (learningInitial && learningCurrent && learningConfidence && learningTrend) {
+      learningInitial.innerText = `${(activeVehicle.userMileage || 45).toFixed(1)} km/L`;
+      learningCurrent.innerText = `${(activeVehicle.learnedMileage || 45).toFixed(1)} km/L`;
+      learningConfidence.innerText = `${activeVehicle.confidence || 0}%`;
+      
+      const initial = activeVehicle.userMileage || 45;
+      const current = activeVehicle.learnedMileage || 45;
+      
+      if (current > initial) {
+        learningTrend.innerHTML = '<span style="color:var(--success-color)">↑ Improving</span>';
+      } else if (current < initial) {
+        learningTrend.innerHTML = '<span style="color:var(--danger-color)">↓ Declining</span>';
+      } else {
+        learningTrend.innerHTML = '<span style="color:var(--text-secondary)">➔ Stable</span>';
+      }
+    }
   } else {
     document.getElementById('profile-avatar-initials').innerText = '?';
     document.getElementById('profile-active-name').innerText = 'No Vehicle';
     document.getElementById('profile-active-details').innerHTML = `Please add a vehicle to track stats.`;
+    
+    const learningInitial = document.getElementById('learning-initial');
+    const learningCurrent = document.getElementById('learning-current');
+    const learningConfidence = document.getElementById('learning-confidence');
+    const learningTrend = document.getElementById('learning-trend');
+    
+    if (learningInitial && learningCurrent && learningConfidence && learningTrend) {
+      learningInitial.innerText = '--';
+      learningCurrent.innerText = '--';
+      learningConfidence.innerText = '--';
+      learningTrend.innerHTML = '➔ Stable';
+    }
   }
   
   // Render Achievements
@@ -1020,6 +1084,47 @@ function handleRefillSubmit(e) {
   
   const liters = amount / rate;
   
+  // Check cycle performance of the previous tank before recording new one
+  const vRefills = state.refills
+    .filter(r => r.vehicleId === vehicle.id)
+    .sort((a, b) => new Date(a.date) - new Date(b.date) || a.odometer - b.odometer);
+    
+  if (vRefills.length > 0) {
+    const lastRefill = vRefills[vRefills.length - 1];
+    const expectedRange = lastRefill.rangeAdded || 0;
+    const actualDistance = odometer - lastRefill.odometer;
+    
+    if (expectedRange > 0 && lastRefill.liters > 0) {
+      const errorPercent = ((actualDistance - expectedRange) / expectedRange) * 100;
+      const observedMileage = actualDistance / lastRefill.liters;
+      
+      if (!vehicle.refillErrors) vehicle.refillErrors = [];
+      vehicle.refillErrors.push({
+        expected: parseFloat(expectedRange.toFixed(1)),
+        actual: parseFloat(actualDistance.toFixed(1)),
+        errorPercent: parseFloat(errorPercent.toFixed(1)),
+        observedMileage: parseFloat(observedMileage.toFixed(2)),
+        date: date
+      });
+      if (vehicle.refillErrors.length > 10) {
+        vehicle.refillErrors.shift();
+      }
+      
+      // Calculate consecutive surplus
+      if (errorPercent > 0) {
+        vehicle.consecutiveSurplusCount = (vehicle.consecutiveSurplusCount || 0) + 1;
+      } else {
+        vehicle.consecutiveSurplusCount = 0;
+      }
+      
+      const count = vehicle.consecutiveSurplusCount;
+      if (count === 3) vehicle.confidence = 25;
+      else if (count === 4) vehicle.confidence = 50;
+      else if (count >= 5) vehicle.confidence = 80;
+      else if (count < 3) vehicle.confidence = 0;
+    }
+  }
+  
   // Record Refill
   const refill = {
     id: 'refill-' + Date.now(),
@@ -1034,7 +1139,7 @@ function handleRefillSubmit(e) {
   
   state.refills.push(refill);
   
-  // Recalculate learned mileage
+  // Sync vehicle.mileage to current learnedMileage
   recalculateVehicleMileage(vehicle);
   
   // Calculate range added using corrected mileage
@@ -1050,6 +1155,12 @@ function handleRefillSubmit(e) {
   state.petrolRate = rate;
   state.rateSource = 'User Input';
   
+  // Check if Mileage Insight Modal should pop up
+  let showInsightModal = false;
+  if (vehicle.consecutiveSurplusCount === 3 || vehicle.consecutiveSurplusCount === 5) {
+    showInsightModal = true;
+  }
+  
   // Gamification trigger
   if (typeof updateStreakAndAchievements === 'function') {
     updateStreakAndAchievements();
@@ -1063,6 +1174,22 @@ function handleRefillSubmit(e) {
   // Reset Form and close modal
   e.target.reset();
   closeModal('refill-modal');
+  
+  // Trigger Modal Popup after DOM has updated
+  if (showInsightModal) {
+    setTimeout(() => {
+      document.getElementById('insight-vehicle-name').innerText = vehicle.name;
+      document.getElementById('insight-refill-count').innerText = vehicle.consecutiveSurplusCount;
+      document.getElementById('insight-expected-mileage').innerText = `${vehicle.learnedMileage.toFixed(1)} km/L`;
+      
+      const streakSize = vehicle.consecutiveSurplusCount;
+      const relevantErrors = vehicle.refillErrors.slice(-streakSize);
+      const avgObserved = relevantErrors.reduce((sum, item) => sum + item.observedMileage, 0) / streakSize;
+      document.getElementById('insight-observed-mileage').innerText = `~${avgObserved.toFixed(1)} km/L`;
+      
+      openModal('insight-modal');
+    }, 400);
+  }
 }
 
 // Delete history refill item
@@ -1087,6 +1214,26 @@ function confirmDeleteRefill() {
     // Recalculate last refill odo & range for that vehicle
     const vehicle = state.vehicles.find(v => v.id === refill.vehicleId);
     if (vehicle) {
+      if (vehicle.refillErrors && vehicle.refillErrors.length > 0) {
+        vehicle.refillErrors.pop();
+      }
+      // Recalculate consecutive surplus count from remaining errors
+      let surplusCount = 0;
+      if (vehicle.refillErrors) {
+        for (let i = vehicle.refillErrors.length - 1; i >= 0; i--) {
+          if (vehicle.refillErrors[i].errorPercent > 0) {
+            surplusCount++;
+          } else {
+            break;
+          }
+        }
+      }
+      vehicle.consecutiveSurplusCount = surplusCount;
+      if (surplusCount === 3) vehicle.confidence = 25;
+      else if (surplusCount === 4) vehicle.confidence = 50;
+      else if (surplusCount >= 5) vehicle.confidence = 80;
+      else vehicle.confidence = 0;
+
       recalculateVehicleMileage(vehicle);
       
       const vRefills = state.refills
@@ -1155,9 +1302,14 @@ function handleVehicleSubmit(e) {
     name,
     mileage,
     manualMileage: mileage,
+    userMileage: mileage,
+    learnedMileage: mileage,
     odometer,
     lastRefillOdo: odometer,
-    lastRefillRange: 0
+    lastRefillRange: 0,
+    confidence: 0,
+    consecutiveSurplusCount: 0,
+    refillErrors: []
   };
   
   state.vehicles.push(newVehicle);
@@ -1189,12 +1341,18 @@ function handleEditVehicleMileage(e) {
   }
   
   activeVehicle.manualMileage = newMileage;
+  activeVehicle.userMileage = newMileage;
+  activeVehicle.learnedMileage = newMileage;
+  activeVehicle.confidence = 0;
+  activeVehicle.consecutiveSurplusCount = 0;
+  activeVehicle.refillErrors = [];
+  
   recalculateVehicleMileage(activeVehicle);
   // Recalculate any remaining ranges if necessary
   if (state.refills.length > 0) {
     const vRefills = state.refills
       .filter(r => r.vehicleId === activeVehicle.id)
-      .sort((a, b) => a.odometer - b.odometer);
+      .sort((a, b) => new Date(a.date) - new Date(b.date) || a.odometer - b.odometer);
       
     if (vRefills.length > 0) {
       // Recalculate range for the last refill with new mileage
@@ -1210,6 +1368,41 @@ function handleEditVehicleMileage(e) {
   renderHistory();
   
   closeModal('edit-vehicle-modal');
+}
+
+// Handler for Mileage Insight Modal choices
+function handleInsightChoice(choice) {
+  const vehicle = getActiveVehicle();
+  if (!vehicle) return;
+  
+  if (choice === 'better') {
+    const streakSize = vehicle.consecutiveSurplusCount || 3;
+    const relevantErrors = vehicle.refillErrors.slice(-streakSize);
+    const avgObserved = relevantErrors.reduce((sum, item) => sum + item.observedMileage, 0) / streakSize;
+    
+    const oldMileage = vehicle.learnedMileage || vehicle.mileage || 45;
+    const newMileage = 0.8 * oldMileage + 0.2 * avgObserved;
+    
+    vehicle.learnedMileage = parseFloat(newMileage.toFixed(2));
+    vehicle.mileage = vehicle.learnedMileage;
+    
+    vehicle.consecutiveSurplusCount = 0;
+    vehicle.confidence = 0;
+    
+    alert(`Mileage updated! New learned mileage is ${vehicle.learnedMileage.toFixed(1)} km/L.`);
+  } else if (choice === 'leftover') {
+    vehicle.consecutiveSurplusCount = 0;
+    vehicle.confidence = 0;
+    alert("Tracking reset. Odometer surplus was noted as leftover fuel.");
+  } else if (choice === 'unsure') {
+    // Do nothing, continue tracking
+  }
+  
+  saveState();
+  closeModal('insight-modal');
+  renderDashboard();
+  renderProfile();
+  renderHistory();
 }
 
 // Clear all app data
