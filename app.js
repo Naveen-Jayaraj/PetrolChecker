@@ -263,20 +263,56 @@ function renderDashboard() {
     odoInput.min = lastRefillOdo;
   }
   
+  const predictedOdoSpan = document.getElementById('dash-predicted-odo');
+  if (predictedOdoSpan) {
+    predictedOdoSpan.innerText = totalRange > 0 ? `${Math.round(lastRefillOdo + totalRange).toLocaleString()} km` : 'None';
+  }
+  
   // Update travelled diff text
   const diff = Math.max(0, currentOdo - lastRefillOdo);
+  const fuelUsed = vehicle.mileage > 0 ? (diff / vehicle.mileage).toFixed(1) : 0;
   const diffSpan = document.getElementById('odo-travelled-diff');
   if (diffSpan) {
-    diffSpan.innerText = `Travelled: ${diff} km since fill`;
+    diffSpan.innerText = `Travelled: ${diff} km | Fuel Used: ~${fuelUsed} L`;
   }
   
   // Gamification Updates
   const streakBanner = document.getElementById('streak-banner');
   const streakCount = document.getElementById('streak-count');
   if (streakBanner && state.streaks) {
+    // Determine if streak is valid today
+    const todayStr = new Date().toISOString().split('T')[0];
+    let isStreakActiveToday = state.streaks.lastActionDate === todayStr;
+    
+    // Check if we lost the streak
+    if (state.streaks.lastActionDate && !isStreakActiveToday) {
+      const lastDate = new Date(state.streaks.lastActionDate);
+      const diffTime = Math.abs(new Date() - lastDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays > 1) {
+        state.streaks.count = 0; // Lost streak
+      }
+    }
+    
     if (state.streaks.count > 0) {
       streakBanner.style.display = 'flex';
       streakCount.innerText = state.streaks.count;
+      
+      const fireIcon = streakBanner.querySelector('.streak-icon');
+      if (fireIcon) {
+        if (!isStreakActiveToday) {
+          fireIcon.classList.add('streak-locked');
+          fireIcon.classList.remove('streak-ignite');
+        } else {
+          fireIcon.classList.remove('streak-locked');
+          if (state.streaks.ignite) {
+            fireIcon.classList.add('streak-ignite');
+            state.streaks.ignite = false; // Reset flag after rendering
+          } else {
+            fireIcon.classList.remove('streak-ignite');
+          }
+        }
+      }
     } else {
       streakBanner.style.display = 'none';
     }
@@ -337,9 +373,10 @@ function softUpdateOdometer(newValue) {
   
   // Update travelled diff text
   const diff = Math.max(0, newValue - lastRefillOdo);
+  const fuelUsed = vehicle.mileage > 0 ? (diff / vehicle.mileage).toFixed(1) : 0;
   const diffSpan = document.getElementById('odo-travelled-diff');
   if (diffSpan) {
-    diffSpan.innerText = `Travelled: ${diff} km since fill`;
+    diffSpan.innerText = `Travelled: ${diff} km | Fuel Used: ~${fuelUsed} L`;
   }
   
   // Update gauge circle
@@ -981,23 +1018,42 @@ function renderProfile() {
   const achievementsContainer = document.getElementById('achievements-container');
   if (achievementsContainer) {
     achievementsContainer.innerHTML = '';
-    if (!state.achievements || state.achievements.length === 0) {
-      achievementsContainer.innerHTML = '<div style="grid-column: span 2; font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 20px;">No achievements yet. Keep tracking to unlock badges!</div>';
-    } else {
-      state.achievements.forEach(ach => {
-        const achCard = document.createElement('div');
+    
+    const ALL_ACHIEVEMENTS = [
+      { id: 'first_refill', title: 'First Refill', icon: '⛽' },
+      { id: 'five_refills', title: 'Frequent Flyer', icon: '🚀' },
+      { id: 'ten_refills', title: 'Petrolhead', icon: '🏁' },
+      { id: 'streak_3', title: 'On Fire (3 Days)', icon: '🔥' },
+      { id: 'streak_7', title: 'Dedicated Tracker', icon: '📅' },
+      { id: '1k_club', title: '1000km Club', icon: '🛣️' }
+    ];
+
+    ALL_ACHIEVEMENTS.forEach(achDef => {
+      const achCard = document.createElement('div');
+      const unlocked = state.achievements.find(a => a.id === achDef.id);
+      
+      if (unlocked) {
         achCard.className = 'achievement-card';
-        const dateFormatted = new Date(ach.date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+        const dateFormatted = new Date(unlocked.date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
         achCard.innerHTML = `
-          <div class="achievement-icon">${ach.icon}</div>
+          <div class="achievement-icon">${achDef.icon}</div>
           <div class="achievement-info">
-            <span class="achievement-title">${ach.title}</span>
+            <span class="achievement-title">${achDef.title}</span>
             <span class="achievement-date">${dateFormatted}</span>
           </div>
         `;
-        achievementsContainer.appendChild(achCard);
-      });
-    }
+      } else {
+        achCard.className = 'achievement-card locked';
+        achCard.innerHTML = `
+          <div class="achievement-icon">${achDef.icon}</div>
+          <div class="achievement-info">
+            <span class="achievement-title">${achDef.title}</span>
+            <span class="achievement-date">Locked</span>
+          </div>
+        `;
+      }
+      achievementsContainer.appendChild(achCard);
+    });
   }
 }
 
@@ -1146,10 +1202,16 @@ function handleRefillSubmit(e) {
   const rangeAdded = liters * vehicle.mileage;
   refill.rangeAdded = rangeAdded;
   
+  // Accumulate remaining range
+  let remainingRange = 0;
+  if (vehicle.lastRefillOdo > 0 && vehicle.lastRefillRange > 0) {
+    remainingRange = Math.max(0, (vehicle.lastRefillOdo + vehicle.lastRefillRange) - odometer);
+  }
+  
   // Update active vehicle stats
   vehicle.odometer = odometer;
-  vehicle.lastRefillOdo = odometer;
-  vehicle.lastRefillRange = parseFloat(rangeAdded.toFixed(1));
+  vehicle.lastRefillOdo = odometer; // Reset baseline
+  vehicle.lastRefillRange = parseFloat((remainingRange + rangeAdded).toFixed(1)); // Pool range
   
   // Update petrol rate in state for caching
   state.petrolRate = rate;
@@ -1497,8 +1559,8 @@ function openModal(modalId) {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('refill-date').value = today;
     
-    // Auto-fetch/refresh petrol price
-    fetchLocalPetrolRate();
+    // Set default petrol price
+    document.getElementById('refill-rate').value = state.petrolRate.toFixed(2);
   } else if (modalId === 'edit-vehicle-modal') {
     const vehicle = getActiveVehicle();
     if (vehicle) {
@@ -1567,31 +1629,22 @@ document.addEventListener('DOMContentLoaded', () => {
         softUpdateOdometer(val);
       }
     };
-    odoInput.onchange = (e) => {
-      const val = parseInt(e.target.value);
+  }
+  
+  // Tick Button Tactile Feedback & Update
+  const btnTick = document.getElementById('btn-odo-tick');
+  if (btnTick && odoInput) {
+    btnTick.onclick = () => {
+      const val = parseInt(odoInput.value);
       if (!isNaN(val)) {
         updateOdometer(val);
-      }
-    };
-  }
-  
-  // Interactive adjustment buttons on Dashboard Odo Card
-  const btnMinusOdo = document.getElementById('btn-odo-minus');
-  if (btnMinusOdo) {
-    btnMinusOdo.onclick = () => {
-      const activeVehicle = getActiveVehicle();
-      if (activeVehicle) {
-        updateOdometer(activeVehicle.odometer - 1);
-      }
-    };
-  }
-  
-  const btnPlusOdo = document.getElementById('btn-odo-plus');
-  if (btnPlusOdo) {
-    btnPlusOdo.onclick = () => {
-      const activeVehicle = getActiveVehicle();
-      if (activeVehicle) {
-        updateOdometer(activeVehicle.odometer + 1);
+        // Visual feedback
+        btnTick.style.transform = 'scale(0.85)';
+        btnTick.style.backgroundColor = 'var(--success-color)';
+        setTimeout(() => {
+          btnTick.style.transform = 'scale(1)';
+          btnTick.style.backgroundColor = ''; // Reverts to CSS
+        }, 150);
       }
     };
   }
@@ -1625,11 +1678,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Register Service Worker for PWA compliance
   registerServiceWorker();
   
-  // Check online status and fetch live rates
-  window.addEventListener('online', fetchLocalPetrolRate);
-  window.addEventListener('offline', () => updateRateUI(state.petrolRate, 'offline'));
-  fetchLocalPetrolRate();
-  
   // Handle PWA Shortcuts Routing
   handleURLParameters();
 });
@@ -1655,6 +1703,9 @@ function updateStreakAndAchievements() {
       state.streaks.count = 1;
     }
     state.streaks.lastActionDate = todayStr;
+    state.streaks.ignite = true; // Trigger animation flag
+  } else {
+    state.streaks.ignite = false;
   }
   
   // Achievement Logic
@@ -1666,7 +1717,9 @@ function updateStreakAndAchievements() {
   
   if (state.refills.length > 0) addAchievement('first_refill', 'First Refill', '⛽');
   if (state.refills.length >= 5) addAchievement('five_refills', 'Frequent Flyer', '🚀');
+  if (state.refills.length >= 10) addAchievement('ten_refills', 'Petrolhead', '🏁');
   if (state.streaks.count >= 3) addAchievement('streak_3', 'On Fire (3 Days)', '🔥');
+  if (state.streaks.count >= 7) addAchievement('streak_7', 'Dedicated Tracker', '📅');
   
   const hasVOver1k = state.vehicles.some(v => v.odometer >= 1000);
   if (hasVOver1k) addAchievement('1k_club', '1000km Club', '🛣️');

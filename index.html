@@ -88,9 +88,13 @@
               <div class="info-item-label">Vehicle Mileage</div>
               <div id="dash-mileage" class="info-item-value">45 km/L</div>
             </div>
-            <div class="info-item" style="grid-column: span 2;">
+            <div class="info-item">
               <div class="info-item-label">Last Refill Odo</div>
               <div id="dash-last-refill-odo" class="info-item-value">0 km</div>
+            </div>
+            <div class="info-item">
+              <div class="info-item-label">Predicted Empty</div>
+              <div id="dash-predicted-odo" class="info-item-value">0 km</div>
             </div>
           </div>
           
@@ -110,15 +114,12 @@
           </div>
           
           <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
-            <button id="btn-odo-minus" class="btn-adjust" style="width: 50px; flex: none; height: 48px; padding: 0; border-radius: 12px;" aria-label="Decrease odometer by 1 km">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin: 0;"><path d="M19 13H5v-2h14v2z"/></svg>
-            </button>
             <div class="input-wrapper" style="flex: 1;">
               <input type="number" id="current-odo-input" class="form-input form-input-with-suffix" style="font-size: 1.3rem; text-align: center; font-weight: 700; color: var(--accent-color); padding: 10px 42px 10px 14px; background-color: var(--surface-accent);" placeholder="1250" min="0" step="1" inputmode="numeric">
               <span class="input-suffix" style="right: 14px; font-weight: 600;">km</span>
             </div>
-            <button id="btn-odo-plus" class="btn-adjust" style="width: 50px; flex: none; height: 48px; padding: 0; border-radius: 12px;" aria-label="Increase odometer by 1 km">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin: 0;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            <button id="btn-odo-tick" class="btn-primary" style="width: 56px; flex: none; height: 48px; padding: 0; border-radius: 12px; transition: transform 0.2s, background-color 0.2s;" aria-label="Confirm odometer update">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="margin: 0;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
             </button>
           </div>
         </div>
@@ -311,13 +312,7 @@
               <input type="number" id="refill-rate" class="form-input form-input-with-suffix" placeholder="104.21" required min="1" step="0.01" inputmode="decimal">
               <span class="input-suffix">₹/L</span>
             </div>
-            <div class="rate-badge-row">
-              <span class="rate-status">
-                <span id="rate-status-dot" class="status-dot"></span>
-                <span id="rate-status-text">Fetching location rate...</span>
-              </span>
-              <button type="button" class="btn-text" onclick="fetchLocalPetrolRate()">Force Refresh</button>
-            </div>
+            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px;">Updates your default fuel price</p>
           </div>
           
           <div class="form-group">
